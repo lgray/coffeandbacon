@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import pprint
+import os
 import numpy as np
 from coffea import hist, processor
 from coffea.util import load, save
@@ -296,11 +297,12 @@ class BoostedHbbProcessor(processor.ProcessorABC):
             # Only take jet triggers from JetHT, single muon triggers from SingleMuon dataset
             # necessary but not sufficient condition to prevent double-counting
             # (this plus mutually exclusive offline selections are sufficient)
-            selection.add('trigger', (df['triggerBits'] & self._corrections[f'{self._year}_triggerMask']).astype('bool') & (dataset=="JetHT"))
-            selection.add('mutrigger', ((df['triggerBits']&1) & df['passJson']).astype('bool') & (dataset=="SingleMuon"))
+            selection.add('trigger', ((df['triggerBits'].astype('uint64') & self._corrections[f'{self._year}_triggerMask'].astype('uint64')) > 0 ) & ((dataset=="JetHT") or (dataset=='data_obs_jet')) )
+            selection.add('mutrigger', (((df['triggerBits'].astype('uint64') & 1) > 0) & df['passJson'].astype('bool')) & ((dataset=="SingleMuon") or (dataset=="data_obs_mu")) )
             if self._debug:
                 print("Trigger pass/all", selection.all('trigger').sum(), df.size)
                 print("Muon trigger pass/all", selection.all('mutrigger').sum(), df.size)
+                print(df['AK8Puppijet0_isHadronicV'])
         else:
             selection.add('trigger', np.ones(df.size, dtype='bool'))
             selection.add('mutrigger', np.ones(df.size, dtype='bool'))
@@ -356,7 +358,7 @@ class BoostedHbbProcessor(processor.ProcessorABC):
             # SumWeights is sum(scale1fb), so we need to use full value here
             weights.add('genweight', df['scale1fb'])
 
-        if not self._skipPileup:
+        if not isRealData and not self._skipPileup:
             if self._year == '2017' and dataset in self._corrections['2017_pileupweight_dataset']:
                 weights.add('pileupweight',
                             self._corrections['2017_pileupweight_dataset'][dataset](df['npu']),
@@ -427,6 +429,17 @@ class BoostedHbbProcessor(processor.ProcessorABC):
         if self._debug:
             print("Weight statistics:")
             pprint.pprint(weights._weightStats, indent=4)
+            print("Selection statistics:")
+            nice_selections = {}
+            for i, name in enumerate(selection._names):
+                nice_selections[name] = (((selection._mask & (1 << i)) >> i).sum(), selection._mask.size)
+            pprint.pprint(nice_selections)
+            print("Region statistics:")
+            nice_regions = {}
+            for name, cuts in regions.items():
+                nice_regions[name] = (selection.all(*cuts).sum(), selection._mask.size)
+            pprint.pprint(nice_regions)
+                  
 
         hout = self.accumulator.identity()
         for histname, h in hout.items():

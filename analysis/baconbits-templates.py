@@ -13,7 +13,7 @@ from coffea import hist
 from coffea.util import load, save
 import processmap
 
-hists_unmapped = load('hists_Hbb_create_2017.coffea')
+hists_unmapped = load('hists.coffea')
 
 
 hists = {}
@@ -36,17 +36,17 @@ for proc in h.identifiers('process'):
         for syst in h.identifiers('systematic'):
             mproj = (slice(None), 'all')
             systreal = syst
-            fail_template = (h.project('process', proc)
-                              .project('AK8Puppijet0_isHadronicV', *mproj)
-                              .project('systematic', systreal)
-                              .project('AK8Puppijet0_pt', ptbin)
-                              .project('AK8Puppijet0_deepdoubleb', slice(None,0.89), overflow='under')
+            fail_template = (h.integrate('process', proc)
+                              .integrate('AK8Puppijet0_isHadronicV', *mproj)
+                              .integrate('systematic', systreal)
+                              .integrate('AK8Puppijet0_pt', ptbin)
+                              .integrate('AK8Puppijet0_deepdoubleb', slice(None,0.89), overflow='under')
                             )
-            pass_template = (h.project('process', proc)
-                              .project('AK8Puppijet0_isHadronicV', *mproj)
-                              .project('systematic', systreal)
-                              .project('AK8Puppijet0_pt', ptbin)
-                              .project('AK8Puppijet0_deepdoubleb', slice(0.89,None))
+            pass_template = (h.integrate('process', proc)
+                              .integrate('AK8Puppijet0_isHadronicV', *mproj)
+                              .integrate('systematic', systreal)
+                              .integrate('AK8Puppijet0_pt', ptbin)
+                              .integrate('AK8Puppijet0_deepdoubleb', slice(0.89,None))
                             )
             content = fail_template.sum('AK8Puppijet0_msd').values()
             if content == {} or content[()] == 0.:
@@ -82,17 +82,17 @@ for proc in h.identifiers('process'):
     for syst in h.identifiers('systematic'):
         mproj = (slice(None), 'all')
         systreal = syst
-        fail_template = (h.project('process', proc)
-                            .project('AK8Puppijet0_isHadronicV', *mproj)
-                            .project('systematic', systreal)
-                            .project('AK8Puppijet0_pt', overflow='all')
-                            .project('AK8Puppijet0_deepdoubleb', slice(None,0.89), overflow='under')
+        fail_template = (h.integrate('process', proc)
+                            .integrate('AK8Puppijet0_isHadronicV', *mproj)
+                            .integrate('systematic', systreal)
+                            .integrate('AK8Puppijet0_pt', overflow='all')
+                            .integrate('AK8Puppijet0_deepdoubleb', slice(None,0.89), overflow='under')
                         )
-        pass_template = (h.project('process', proc)
-                            .project('AK8Puppijet0_isHadronicV', *mproj)
-                            .project('systematic', systreal)
-                            .project('AK8Puppijet0_pt', overflow='all')
-                            .project('AK8Puppijet0_deepdoubleb', slice(0.89,None))
+        pass_template = (h.integrate('process', proc)
+                            .integrate('AK8Puppijet0_isHadronicV', *mproj)
+                            .integrate('systematic', systreal)
+                            .integrate('AK8Puppijet0_pt', overflow='all')
+                            .integrate('AK8Puppijet0_deepdoubleb', slice(0.89,None))
                         )
         content = fail_template.sum('AK8Puppijet0_msd').values()
         if content == {} or content[()] == 0.:
