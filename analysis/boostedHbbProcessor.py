@@ -463,7 +463,10 @@ class BoostedHbbProcessor(processor.ProcessorABC):
                 region = region[0]
                 weight = weights.weight()
                 cut = selection.all(*regions[region])
-                h.fill(systematic="", **fields, weight=weight*cut)
+                if 'systematic' in h.fields:
+                    h.fill(systematic="", **fields, weight=weight*cut)
+                else:
+                    h.fill(**fields, weight=weight*cut)
                 if 'systematic' in h.fields:
                     if self._debug:
                         print("Filling systematics for %s" % histname)
@@ -496,7 +499,12 @@ class BoostedHbbProcessor(processor.ProcessorABC):
                             cut_syst = selection.all(*cut_syst)
                         else:
                             cut_syst = cut
-                        h.fill(systematic=syst, **fields_syst, weight=weight_syst*cut_syst)
+                        fields_fill = {}
+                        for field in h.fields:
+                            if field == 'systematic': 
+                                continue
+                            fields_fill[field] = fields_syst[field]
+                        h.fill(systematic=syst, **fields_fill, weight=weight_syst*cut_syst)
             elif len(region) > 1:
                 raise ValueError("Histogram '%s' has a name matching multiple region definitions: %r" % (histname, region))
             else:
